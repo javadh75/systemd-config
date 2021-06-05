@@ -14,7 +14,7 @@ func NewUnitOption(option, value string) *OptionValue {
 }
 
 func (uo *OptionValue) String() string {
-	return fmt.Sprintf("{Option: %q, Value: %q", uo.Option, uo.Value)
+	return fmt.Sprintf("{Option: %q, Value: %q}", uo.Option, uo.Value)
 }
 
 // Match compares two UnitOptions and returns true if they are identical.
