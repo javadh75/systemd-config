@@ -1,6 +1,6 @@
 package systemdconfig
 
-// Represents a setion and it's options.
+// Section represents a setion and it's options.
 type Section struct {
 	Name    string
 	Options []*OptionValue

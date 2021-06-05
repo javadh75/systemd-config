@@ -2,7 +2,7 @@ package systemdconfig
 
 import "fmt"
 
-// Repreents a option of an section.
+// OptionValue repreents a option of an section.
 type OptionValue struct {
 	Option string
 	Value  string
