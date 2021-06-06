@@ -30,7 +30,7 @@ func TestSerializer(t *testing.T) {
 			args{
 				unit: &Unit{
 					Sections: []*Section{
-						&Section{
+						{
 							Name:    "Match",
 							Options: []*OptionValue{},
 						},
@@ -44,14 +44,14 @@ func TestSerializer(t *testing.T) {
 			args{
 				unit: &Unit{
 					Sections: []*Section{
-						&Section{
+						{
 							Name: "Match",
 							Options: []*OptionValue{
-								&OptionValue{
+								{
 									Option: "A",
 									Value:  "B",
 								},
-								&OptionValue{
+								{
 									Option: "C",
 									Value:  "D",
 								},
@@ -70,19 +70,19 @@ C=D
 			args{
 				unit: &Unit{
 					Sections: []*Section{
-						&Section{
+						{
 							Name: "AAA",
 							Options: []*OptionValue{
-								&OptionValue{
+								{
 									Option: "A",
 									Value:  "B",
 								},
 							},
 						},
-						&Section{
+						{
 							Name: "BBB",
 							Options: []*OptionValue{
-								&OptionValue{
+								{
 									Option: "A",
 									Value:  "B",
 								},
@@ -103,19 +103,19 @@ A=B
 			args{
 				unit: &Unit{
 					Sections: []*Section{
-						&Section{
+						{
 							Name: "AAA",
 							Options: []*OptionValue{
-								&OptionValue{
+								{
 									Option: "A",
 									Value:  "B",
 								},
 							},
 						},
-						&Section{
+						{
 							Name: "AAA",
 							Options: []*OptionValue{
-								&OptionValue{
+								{
 									Option: "A",
 									Value:  "B",
 								},
@@ -158,7 +158,7 @@ func TestWriteNewLine(t *testing.T) {
 }
 
 func TestWriteSectionHeader(t *testing.T) {
-	var empty_byte_slice []byte
+	var emptyByteSlice []byte
 	type args struct {
 		buf     *bytes.Buffer
 		section *Section
@@ -170,7 +170,7 @@ func TestWriteSectionHeader(t *testing.T) {
 		{
 			"SimpleOption",
 			args{
-				buf: bytes.NewBuffer(empty_byte_slice),
+				buf: bytes.NewBuffer(emptyByteSlice),
 				section: &Section{
 					Name:    "Sec",
 					Options: []*OptionValue{},
@@ -180,7 +180,7 @@ func TestWriteSectionHeader(t *testing.T) {
 		{
 			"EmptySection",
 			args{
-				buf: bytes.NewBuffer(empty_byte_slice),
+				buf: bytes.NewBuffer(emptyByteSlice),
 				section: &Section{
 					Name:    "",
 					Options: []*OptionValue{},
@@ -203,7 +203,7 @@ func TestWriteSectionHeader(t *testing.T) {
 }
 
 func TestWriteOptionValue(t *testing.T) {
-	var empty_byte_slice []byte
+	var emptyByteSlice []byte
 	type args struct {
 		buf    *bytes.Buffer
 		option *OptionValue
@@ -215,7 +215,7 @@ func TestWriteOptionValue(t *testing.T) {
 		{
 			"SimpleOption",
 			args{
-				buf: bytes.NewBuffer(empty_byte_slice),
+				buf: bytes.NewBuffer(emptyByteSlice),
 				option: &OptionValue{
 					Option: "Opt",
 					Value:  "Val",
@@ -225,7 +225,7 @@ func TestWriteOptionValue(t *testing.T) {
 		{
 			"EmptyOption",
 			args{
-				buf: bytes.NewBuffer(empty_byte_slice),
+				buf: bytes.NewBuffer(emptyByteSlice),
 				option: &OptionValue{
 					Option: "",
 					Value:  "",
@@ -235,7 +235,7 @@ func TestWriteOptionValue(t *testing.T) {
 		{
 			"EmptyValue",
 			args{
-				buf: bytes.NewBuffer(empty_byte_slice),
+				buf: bytes.NewBuffer(emptyByteSlice),
 				option: &OptionValue{
 					Option: "Opt",
 					Value:  "",
@@ -245,7 +245,7 @@ func TestWriteOptionValue(t *testing.T) {
 		{
 			"EmptyOpt",
 			args{
-				buf: bytes.NewBuffer(empty_byte_slice),
+				buf: bytes.NewBuffer(emptyByteSlice),
 				option: &OptionValue{
 					Option: "",
 					Value:  "Val",
