@@ -134,7 +134,7 @@ A=B
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			outReader := Serializer(tt.args.unit)
+			outReader := Serialize(tt.args.unit)
 			outBytes, err := ioutil.ReadAll(outReader)
 			if err != nil {
 				t.Errorf("case %s: encountered error while reading output: %v", tt.name, err)

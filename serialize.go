@@ -5,8 +5,8 @@ import (
 	"io"
 )
 
-// Serializer serialize the given systemd config unit file.
-func Serializer(unit *Unit) io.Reader {
+// Serialize serialize the given systemd config unit file.
+func Serialize(unit *Unit) io.Reader {
 	var buf bytes.Buffer
 
 	if len(unit.Sections) == 0 {
