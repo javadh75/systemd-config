@@ -36,11 +36,21 @@ import (
 // }
 
 const (
+	// SYSTEMD_LINE_MAX mimics the maximum line length that systemd can use.
+	// On typical systemd platforms (i.e. modern Linux), this will most
+	// commonly be 2048, so let's use that as a sanity check.
+	// Technically, we should probably pull this at runtime:
+	//    SYSTEMD_LINE_MAX = int(C.sysconf(C.__SC_LINE_MAX))
+	// but this would introduce an (unfortunate) dependency on cgo
 	SYSTEMD_LINE_MAX = 2048
-	SYSTEMD_NEWLINE  = "\r\n"
+
+	// SYSTEMD_NEWLINE defines characters that systemd considers indicators
+	// for a newline.
+	SYSTEMD_NEWLINE = "\r\n"
 )
 
 var (
+	// ErrLineTooLong gets returned when a line is too long for systemd to handle.
 	ErrLineTooLong = fmt.Errorf("line too long (max %d bytes)", SYSTEMD_LINE_MAX)
 )
 
@@ -65,6 +75,7 @@ type lexer struct {
 
 type lexStep func() (lexStep, error)
 
+// NewLexer returns a new systemd config lexer and needed data and error channel
 func NewLexer(f io.Reader) (*lexer, <-chan *lexData, <-chan error) {
 	lexchan := make(chan *lexData)
 	errchan := make(chan error, 1)
@@ -278,6 +289,7 @@ func isComment(r rune) bool {
 	return r == '#' || r == ';'
 }
 
+// Deserialize deserialize given unparsed systemd config.
 func Deserialize(f io.Reader) (*Unit, error) {
 	lexer, lexchan, errchan := NewLexer(f)
 
