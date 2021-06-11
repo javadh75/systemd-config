@@ -10,31 +10,6 @@ import (
 	"unicode"
 )
 
-// func Deserializer(reader io.Reader) (*Unit, error) {
-// 	// outputBytes, err := ioutil.ReadAll(reader)
-// 	// if err != nil {
-// 	// 	fmt.Errorf("Encountered error while reading output: %v", err)
-// 	// }
-
-// 	// output := strings.TrimSpace(string(outputBytes))
-
-// 	var unit Unit
-// 	scanner := bufio.NewScanner(reader)
-// 	for scanner.Scan() {
-// 		line := strings.TrimSpace(scanner.Text())
-// 		if len(line) > 0 && line[0] != ';' {
-// 			// if line[0] == '[' && line[strings.Index(line, "]")] == ']' {
-// 			if line[0] == '[' && line[len(line)-1] == ']' {
-// 				if strings.Contains(line[1:len(line)-1], "[") || strings.Contains(line[1:len(line)-1], "]") {
-// 					return nil, errors.New("invalid section name")
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	return &unit, nil
-// }
-
 const (
 	// SYSTEMD_LINE_MAX mimics the maximum line length that systemd can use.
 	// On typical systemd platforms (i.e. modern Linux), this will most
@@ -84,7 +59,7 @@ func NewLexer(f io.Reader) (*lexer, <-chan *lexData, <-chan error) {
 	return &lexer{buf: buf, lexchan: lexchan, errchan: errchan}, lexchan, errchan
 }
 
-func (l *lexer) lex() {
+func (l *lexer) Lex() {
 	defer func() {
 		close(l.lexchan)
 		close(l.errchan)
@@ -293,7 +268,7 @@ func isComment(r rune) bool {
 func Deserialize(f io.Reader) (*Unit, error) {
 	lexer, lexchan, errchan := NewLexer(f)
 
-	go lexer.lex()
+	go lexer.Lex()
 
 	unit := Unit{}
 
