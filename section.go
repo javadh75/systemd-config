@@ -13,7 +13,7 @@ func NewSection(name string) *Section {
 
 func InitialCompareSliceGenerator(size int) []bool {
 	ICS := make([]bool, size)
-	for index, _ := range ICS {
+	for index := range ICS {
 		ICS[index] = false
 	}
 	return ICS
