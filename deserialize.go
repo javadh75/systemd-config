@@ -98,7 +98,7 @@ func (l *lexer) LexNextSection() (lexStep, error) {
 
 	if r == '[' {
 		return l.LexSectionName, nil
-	} else if isComment(r) {
+	} else if IsComment(r) {
 		return l.IgnoreLineFunc(l.LexNextSection), nil
 	}
 	return l.LexNextSection, nil
@@ -149,7 +149,7 @@ func (l *lexer) LexNextSectionOrOptionFunc(section string) lexStep {
 			return l.LexNextSectionOrOptionFunc(section), nil
 		} else if r == '[' {
 			return l.LexSectionName, nil
-		} else if isComment(r) {
+		} else if IsComment(r) {
 			return l.IgnoreLineFunc(l.LexNextSectionOrOptionFunc(section)), nil
 		}
 
@@ -260,7 +260,7 @@ func (l *lexer) toEOL() ([]byte, bool, error) {
 	return line, err == io.EOF, nil
 }
 
-func isComment(r rune) bool {
+func IsComment(r rune) bool {
 	return r == '#' || r == ';'
 }
 
