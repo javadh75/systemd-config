@@ -33,3 +33,36 @@ func TestNewSection(t *testing.T) {
 		})
 	}
 }
+
+func TestInitialCompareSliceGenerator(t *testing.T) {
+	type args struct {
+		size int
+	}
+	tests := []struct {
+		name string
+		args args
+		want []bool
+	}{
+		{
+			name: "Empty",
+			args: args{
+				size: 0,
+			},
+			want: []bool{},
+		},
+		{
+			name: "Simple",
+			args: args{
+				size: 3,
+			},
+			want: []bool{false, false, false},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := InitialCompareSliceGenerator(tt.args.size); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("InitialCompareSliceGenerator() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
