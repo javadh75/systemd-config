@@ -1,6 +1,8 @@
 package systemdconfig
 
 import (
+	"io"
+	"strings"
 	"testing"
 )
 
@@ -44,41 +46,41 @@ func TestIsComment(t *testing.T) {
 	}
 }
 
-func Test_isLexer(t *testing.T) {
+func TestNewLexer(t *testing.T) {
 	type args struct {
-		t interface{}
+		f io.Reader
+		s string
 	}
 	tests := []struct {
 		name string
 		args args
-		want bool
 	}{
 		{
-			name: "nilType",
+			name: "EmptyInput",
 			args: args{
-				t: nil,
+				f: strings.NewReader(""),
+				s: "",
 			},
-			want: false,
 		},
 		{
-			name: "otherType",
+			name: "SimpleInput",
 			args: args{
-				t: 1,
+				f: strings.NewReader("ABCDE"),
+				s: "ABCDE",
 			},
-			want: false,
-		},
-		{
-			name: "lexerType",
-			args: args{
-				t: lexer{},
-			},
-			want: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := isLexer(tt.args.t); got != tt.want {
-				t.Errorf("isLexer() = %v, want %v", got, tt.want)
+			got, _, _ := NewLexer(tt.args.f)
+			buf := new(strings.Builder)
+
+			_, err := io.Copy(buf, got.buf)
+			if err != nil {
+				t.Errorf("Failed to read got.buf %v", got.buf)
+			}
+			if buf.String() != tt.args.s {
+				t.Errorf("NewLexer() got.buf = %v, want %v", buf.String(), tt.args.s)
 			}
 		})
 	}
