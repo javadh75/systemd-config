@@ -40,19 +40,15 @@ func (s *Section) Match(other *Section) bool {
 
 	compareList := InitialCompareSliceGenerator(len(s.Options))
 
-	shouldBreak := false
 	for i, sElement := range s.Options {
 		for j, otherElement := range other.Options {
 			if sElement.Match(otherElement) {
 				compareList[i] = true
 				otherSeen[j] = true
 				break
-			} else if j == len(other.Options) {
-				shouldBreak = true
+			} else if j == len(other.Options)-1 {
+				return false
 			}
-		}
-		if shouldBreak {
-			break
 		}
 	}
 	if !AllAreTrue(otherSeen) || !AllAreTrue(compareList) {
