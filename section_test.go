@@ -113,3 +113,216 @@ func TestAllAreTrue(t *testing.T) {
 		})
 	}
 }
+
+func TestSection_Match(t *testing.T) {
+	type fields struct {
+		Name    string
+		Options []*OptionValue
+	}
+	type args struct {
+		other *Section
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "DiffrentNames",
+			fields: fields{
+				Name:    "A",
+				Options: []*OptionValue{},
+			},
+			args: args{
+				other: &Section{
+					Name:    "B",
+					Options: []*OptionValue{},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "DiffrentLengthOfOptions",
+			fields: fields{
+				Name:    "A",
+				Options: []*OptionValue{},
+			},
+			args: args{
+				other: &Section{
+					Name: "A",
+					Options: []*OptionValue{
+						{
+							Option: "B",
+							Value:  "C",
+						},
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "DiffrentOptionsWithSameLength1",
+			fields: fields{
+				Name: "A",
+				Options: []*OptionValue{
+					{
+						Option: "B",
+						Value:  "C",
+					},
+				},
+			},
+			args: args{
+				other: &Section{
+					Name: "A",
+					Options: []*OptionValue{
+						{
+							Option: "B",
+							Value:  "D",
+						},
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "DiffrentOptionsWithSameLength2",
+			fields: fields{
+				Name: "A",
+				Options: []*OptionValue{
+					{
+						Option: "B",
+						Value:  "C",
+					},
+					{
+						Option: "D",
+						Value:  "C",
+					},
+				},
+			},
+			args: args{
+				other: &Section{
+					Name: "A",
+					Options: []*OptionValue{
+						{
+							Option: "B",
+							Value:  "C",
+						},
+						{
+							Option: "D",
+							Value:  "E",
+						},
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "OrderedEqual",
+			fields: fields{
+				Name: "A",
+				Options: []*OptionValue{
+					{
+						Option: "B",
+						Value:  "C",
+					},
+					{
+						Option: "D",
+						Value:  "C",
+					},
+				},
+			},
+			args: args{
+				other: &Section{
+					Name: "A",
+					Options: []*OptionValue{
+						{
+							Option: "B",
+							Value:  "C",
+						},
+						{
+							Option: "D",
+							Value:  "C",
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "UnorderedEqual",
+			fields: fields{
+				Name: "A",
+				Options: []*OptionValue{
+					{
+						Option: "B",
+						Value:  "C",
+					},
+					{
+						Option: "D",
+						Value:  "C",
+					},
+				},
+			},
+			args: args{
+				other: &Section{
+					Name: "A",
+					Options: []*OptionValue{
+						{
+							Option: "D",
+							Value:  "C",
+						},
+						{
+							Option: "B",
+							Value:  "C",
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "UnorderedDuplicateUnequal",
+			fields: fields{
+				Name: "A",
+				Options: []*OptionValue{
+					{
+						Option: "B",
+						Value:  "C",
+					},
+					{
+						Option: "B",
+						Value:  "C",
+					},
+				},
+			},
+			args: args{
+				other: &Section{
+					Name: "A",
+					Options: []*OptionValue{
+						{
+							Option: "D",
+							Value:  "C",
+						},
+						{
+							Option: "B",
+							Value:  "C",
+						},
+					},
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Section{
+				Name:    tt.fields.Name,
+				Options: tt.fields.Options,
+			}
+			if got := s.Match(tt.args.other); got != tt.want {
+				t.Errorf("Section.Match() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
