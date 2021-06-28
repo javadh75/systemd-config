@@ -48,6 +48,11 @@ type lexer struct {
 	errchan chan error
 }
 
+func isLexer(t interface{}) bool {
+	_, ok := t.(lexer)
+	return ok
+}
+
 type lexStep func() (lexStep, error)
 
 // NewLexer returns a new systemd config lexer and needed data and error channel
