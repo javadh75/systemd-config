@@ -48,7 +48,6 @@ func TestIsComment(t *testing.T) {
 
 func TestNewLexer(t *testing.T) {
 	type args struct {
-		f io.Reader
 		s string
 	}
 	tests := []struct {
@@ -58,21 +57,25 @@ func TestNewLexer(t *testing.T) {
 		{
 			name: "EmptyInput",
 			args: args{
-				f: strings.NewReader(""),
 				s: "",
 			},
 		},
 		{
 			name: "SimpleInput",
 			args: args{
-				f: strings.NewReader("ABCDE"),
 				s: "ABCDE",
+			},
+		},
+		{
+			name: "NotSimpleInput",
+			args: args{
+				s: "AB\nC\rD\nE",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _, _ := NewLexer(tt.args.f)
+			got, _, _ := NewLexer(strings.NewReader(tt.args.s))
 			buf := new(strings.Builder)
 
 			_, err := io.Copy(buf, got.buf)
