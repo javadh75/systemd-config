@@ -254,8 +254,8 @@ func (l *lexer) toEOL() ([]byte, bool, error) {
 		return nil, false, err
 	}
 
-	line = bytes.TrimSuffix(line, []byte{'\r'})
 	line = bytes.TrimSuffix(line, []byte{'\n'})
+	line = bytes.TrimSuffix(line, []byte{'\r'})
 
 	return line, err == io.EOF, nil
 }
