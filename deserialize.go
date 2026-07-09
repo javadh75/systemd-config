@@ -190,10 +190,14 @@ func (l *lexer) LexOptionValueFunc(section, name string) lexStep {
 
 			// a line ending in a backslash is concatenated with the next
 			// non-comment line and the backslash is replaced by a space,
-			// mirroring systemd.syntax(7)
-			if bytes.HasSuffix(line, []byte{'\\'}) && !eof {
+			// mirroring systemd.syntax(7); at EOF there is nothing left to
+			// concatenate, so the marker simply disappears
+			if bytes.HasSuffix(line, []byte{'\\'}) {
 				partial.Write(line[:len(line)-1])
 				partial.WriteRune(' ')
+				if eof {
+					break
+				}
 				continue
 			}
 
@@ -201,10 +205,18 @@ func (l *lexer) LexOptionValueFunc(section, name string) lexStep {
 			break
 		}
 
+		val := strings.TrimSpace(partial.String())
+		// a value ending in a backslash cannot be represented: serializing
+		// it would re-trigger line continuation on the next parse, so the
+		// dangling marker is dropped
+		for strings.HasSuffix(val, `\`) {
+			val = strings.TrimSpace(val[:len(val)-1])
+		}
+
 		l.lexchan <- &lexData{
 			Type:    optionKind,
 			Section: nil,
-			Option:  &OptionValue{Option: name, Value: strings.TrimSpace(partial.String())},
+			Option:  &OptionValue{Option: name, Value: val},
 		}
 
 		return l.LexNextSectionOrOptionFunc(section), nil

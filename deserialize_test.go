@@ -155,10 +155,10 @@ func TestDeserialize(t *testing.T) {
 			}},
 		},
 		{
-			name: "TrailingBackslashAtEOFKeptLiterally",
+			name: "TrailingBackslashAtEOFDropped",
 			in:   "[Service]\nExecStart=/bin/foo \\",
 			want: &Unit{Sections: []*Section{
-				{Name: "Service", Options: []*OptionValue{{Option: "ExecStart", Value: `/bin/foo \`}}},
+				{Name: "Service", Options: []*OptionValue{{Option: "ExecStart", Value: "/bin/foo"}}},
 			}},
 		},
 		{

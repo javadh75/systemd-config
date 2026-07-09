@@ -1,0 +1,10 @@
+[Unit]
+Description=Example daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/example --flag=value
+Environment=FOO=bar
+
+[Install]
+WantedBy=multi-user.target

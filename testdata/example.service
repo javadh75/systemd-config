@@ -1,0 +1,13 @@
+# example unit exercising comments and continuation lines
+[Unit]
+Description=Example daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/example\
+--flag=value
+; a comment between options
+Environment=FOO=bar
+
+[Install]
+WantedBy=multi-user.target
