@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.4.0 — 2026-07-09
 
 ### Breaking changes
 
@@ -36,6 +36,7 @@
 - README: removed the Go Report Card badge (the service is retired) and
   updated the usage example to `Unit.Value`. CI now authenticates codecov
   uploads (`CODECOV_TOKEN`), unsticking the stale coverage badge.
+- Coverage gate ratcheted from 80% to 90% (the suite sits at ~96%).
 
 ## v0.3.0 — 2026-07-09
 

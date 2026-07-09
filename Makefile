@@ -1,5 +1,5 @@
 COVERPROFILE := coverage.out
-COVERAGE_MIN := 80
+COVERAGE_MIN := 90
 PKG          := ./...
 GO           := go
 
