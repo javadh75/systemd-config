@@ -28,7 +28,7 @@ jobs:
           path: |
             coverage.out
             coverage.html
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         continue-on-error: true
         with:
           files: coverage.out
