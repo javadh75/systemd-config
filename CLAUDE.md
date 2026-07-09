@@ -19,8 +19,10 @@ cheapest-to-run first.
 - Bundles the `loopclosure` analyzer — flags loop variables captured by goroutines/closures.
 
 ### Loop safety
-- The `go.mod` directive is `go 1.26`, so loop variables are per-iteration —
-  the classic capture footgun is gone; still lint for the remaining pitfalls.
+- The `go.mod` directive is `go 1.22` (kept low on purpose: a library's go
+  directive is a minimum requirement for consumers). Loop variables are
+  per-iteration from 1.22 on, so the classic capture footgun is gone; still
+  lint for the remaining pitfalls.
 - `golangci-lint` linter `copyloopvar` — flags now-redundant loop-variable copies.
 - `go test -race ./...` — race detector; surfaces loop/goroutine data races at test time.
 

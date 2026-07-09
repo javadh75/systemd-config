@@ -2,47 +2,55 @@ package systemdconfig
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 )
 
 // Serialize serializes the given systemd config unit file.
 func Serialize(unit *Unit) io.Reader {
 	var buf bytes.Buffer
-
-	if len(unit.Sections) == 0 {
-		return &buf
-	}
-
-	for i, section := range unit.Sections {
-		WriteSectionHeader(&buf, section)
-		for _, option := range section.Options {
-			WriteOptionValue(&buf, option)
-		}
-		if i < len(unit.Sections)-1 {
-			WriteNewLine(&buf)
-		}
-	}
-
+	_, _ = unit.WriteTo(&buf)
 	return &buf
 }
 
-// WriteNewLine writes a new line to given buffer.
-func WriteNewLine(buf *bytes.Buffer) {
+// WriteTo writes the serialized unit to w, implementing io.WriterTo.
+func (u *Unit) WriteTo(w io.Writer) (int64, error) {
+	var buf bytes.Buffer
+
+	for i, section := range u.Sections {
+		writeSectionHeader(&buf, section)
+		for _, option := range section.Options {
+			writeOptionValue(&buf, option)
+		}
+		if i < len(u.Sections)-1 {
+			writeNewLine(&buf)
+		}
+	}
+
+	n, err := buf.WriteTo(w)
+	if err != nil {
+		return n, fmt.Errorf("writing unit: %w", err)
+	}
+	return n, nil
+}
+
+// writeNewLine writes a new line to given buffer.
+func writeNewLine(buf *bytes.Buffer) {
 	buf.WriteRune('\n')
 }
 
-// WriteSectionHeader writes a section header to given buffer.
-func WriteSectionHeader(buf *bytes.Buffer, section *Section) {
+// writeSectionHeader writes a section header to given buffer.
+func writeSectionHeader(buf *bytes.Buffer, section *Section) {
 	buf.WriteRune('[')
 	buf.WriteString(section.Name)
 	buf.WriteRune(']')
-	WriteNewLine(buf)
+	writeNewLine(buf)
 }
 
-// WriteOptionValue writes an option and value to given buffer.
-func WriteOptionValue(buf *bytes.Buffer, option *OptionValue) {
+// writeOptionValue writes an option and value to given buffer.
+func writeOptionValue(buf *bytes.Buffer, option *OptionValue) {
 	buf.WriteString(option.Option)
 	buf.WriteRune('=')
 	buf.WriteString(option.Value)
-	WriteNewLine(buf)
+	writeNewLine(buf)
 }

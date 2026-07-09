@@ -24,6 +24,30 @@ func TestNewUnit(t *testing.T) {
 	}
 }
 
+func TestUnit_SectionLookupAndAdd(t *testing.T) {
+	u := NewUnit()
+	if got := u.SectionByName("Address"); got != nil {
+		t.Errorf("SectionByName() on empty unit = %v, want nil", got)
+	}
+	if got := u.SectionsByName("Address"); got != nil {
+		t.Errorf("SectionsByName() on empty unit = %v, want nil", got)
+	}
+
+	first := u.AddSection("Address")
+	u.AddSection("Route")
+	second := u.AddSection("Address")
+
+	if got := u.SectionByName("Address"); got != first {
+		t.Errorf("SectionByName() = %v, want first Address section", got)
+	}
+	if got := u.SectionsByName("Address"); !reflect.DeepEqual(got, []*Section{first, second}) {
+		t.Errorf("SectionsByName() = %v, want both Address sections in order", got)
+	}
+	if len(u.Sections) != 3 {
+		t.Errorf("len(Sections) = %d, want 3", len(u.Sections))
+	}
+}
+
 func TestUnit_Match(t *testing.T) {
 	type fields struct {
 		Sections []*Section

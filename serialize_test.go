@@ -148,11 +148,31 @@ A=B
 	}
 }
 
+func TestUnit_WriteTo(t *testing.T) {
+	unit := &Unit{Sections: []*Section{
+		{Name: "Unit", Options: []*OptionValue{{Option: "Description", Value: "Test"}}},
+		{Name: "Install", Options: []*OptionValue{}},
+	}}
+	want := "[Unit]\nDescription=Test\n\n[Install]\n"
+
+	var buf bytes.Buffer
+	n, err := unit.WriteTo(&buf)
+	if err != nil {
+		t.Fatalf("Unit.WriteTo() error = %v", err)
+	}
+	if n != int64(len(want)) {
+		t.Errorf("Unit.WriteTo() n = %d, want %d", n, len(want))
+	}
+	if buf.String() != want {
+		t.Errorf("Unit.WriteTo() wrote %q, want %q", buf.String(), want)
+	}
+}
+
 func TestWriteNewLine(t *testing.T) {
 	var buf, want bytes.Buffer
 	want.WriteRune('\n')
 	t.Run("SimpleWriteNewLine", func(t *testing.T) {
-		if WriteNewLine(&buf); !reflect.DeepEqual(buf, want) {
+		if writeNewLine(&buf); !reflect.DeepEqual(buf, want) {
 			t.Errorf("WriteNewLine() buf %v, want %v", buf, want)
 		}
 	})
@@ -195,8 +215,8 @@ func TestWriteSectionHeader(t *testing.T) {
 			buf.WriteRune('[')
 			buf.WriteString(tt.args.section.Name)
 			buf.WriteRune(']')
-			WriteNewLine(&buf)
-			if WriteSectionHeader(tt.args.buf, tt.args.section); !reflect.DeepEqual(tt.args.buf.Bytes(), buf.Bytes()) {
+			writeNewLine(&buf)
+			if writeSectionHeader(tt.args.buf, tt.args.section); !reflect.DeepEqual(tt.args.buf.Bytes(), buf.Bytes()) {
 				t.Errorf("WriteSectionHeader() given buffer %v, buf %v", tt.args.buf.String(), buf.String())
 			}
 		})
@@ -260,8 +280,8 @@ func TestWriteOptionValue(t *testing.T) {
 			buf.WriteString(tt.args.option.Option)
 			buf.WriteRune('=')
 			buf.WriteString(tt.args.option.Value)
-			WriteNewLine(&buf)
-			if WriteOptionValue(tt.args.buf, tt.args.option); !reflect.DeepEqual(tt.args.buf.Bytes(), buf.Bytes()) {
+			writeNewLine(&buf)
+			if writeOptionValue(tt.args.buf, tt.args.option); !reflect.DeepEqual(tt.args.buf.Bytes(), buf.Bytes()) {
 				t.Errorf("WriteOptionValue() given buffer %v, buf %v", tt.args.buf.String(), buf.String())
 			}
 		})

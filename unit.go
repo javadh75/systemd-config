@@ -10,6 +10,36 @@ func NewUnit() *Unit {
 	return &Unit{Sections: []*Section{}}
 }
 
+// SectionsByName returns all sections with the given name, in order of
+// appearance. It returns nil when no section matches.
+func (u *Unit) SectionsByName(name string) []*Section {
+	var sections []*Section
+	for _, s := range u.Sections {
+		if s.Name == name {
+			sections = append(sections, s)
+		}
+	}
+	return sections
+}
+
+// SectionByName returns the first section with the given name, or nil
+// when no section matches.
+func (u *Unit) SectionByName(name string) *Section {
+	for _, s := range u.Sections {
+		if s.Name == name {
+			return s
+		}
+	}
+	return nil
+}
+
+// AddSection appends a new empty section with the given name and returns it.
+func (u *Unit) AddSection(name string) *Section {
+	s := NewSection(name)
+	u.Sections = append(u.Sections, s)
+	return s
+}
+
 // Match reports whether u and other contain the same sections, regardless
 // of section order. Duplicate sections must appear the same number of
 // times in both units.

@@ -34,6 +34,31 @@ func TestNewSection(t *testing.T) {
 	}
 }
 
+func TestSection_OptionHelpers(t *testing.T) {
+	s := NewSection("Network")
+
+	if _, ok := s.Value("DNS"); ok {
+		t.Error("Value() on empty section reported present")
+	}
+	if got := s.Values("DNS"); got != nil {
+		t.Errorf("Values() on empty section = %v, want nil", got)
+	}
+
+	s.AddOption("DNS", "1.1.1.1")
+	s.AddOption("Gateway", "10.0.0.1")
+	s.AddOption("DNS", "8.8.8.8")
+
+	if got, ok := s.Value("DNS"); !ok || got != "8.8.8.8" {
+		t.Errorf("Value(DNS) = %q, %v; want last-wins 8.8.8.8, true", got, ok)
+	}
+	if got := s.Values("DNS"); !reflect.DeepEqual(got, []string{"1.1.1.1", "8.8.8.8"}) {
+		t.Errorf("Values(DNS) = %v, want both values in order", got)
+	}
+	if len(s.Options) != 3 {
+		t.Errorf("len(Options) = %d, want 3", len(s.Options))
+	}
+}
+
 func TestSection_Match(t *testing.T) {
 	type fields struct {
 		Name    string
