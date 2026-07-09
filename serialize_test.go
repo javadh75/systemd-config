@@ -37,7 +37,8 @@ func TestSerializer(t *testing.T) {
 					},
 				},
 			},
-			"",
+			`[Match]
+`,
 		},
 		{
 			"SimpleUnit",

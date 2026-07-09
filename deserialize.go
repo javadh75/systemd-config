@@ -11,17 +11,10 @@ import (
 )
 
 const (
-	// LineMax mimics the maximum line length that systemd can use.
-	// On typical systemd platforms (i.e. modern Linux), this will most
-	// commonly be 2048, so let's use that as a sanity check.
-	// Technically, we should probably pull this at runtime:
-	//    LineMax = int(C.sysconf(C.__SC_LINE_MAX))
-	// but this would introduce an (unfortunate) dependency on cgo
-	LineMax = 2048
-
-	// Newline defines characters that systemd considers indicators
-	// for a newline.
-	Newline = "\r\n"
+	// LineMax mimics LONG_LINE_MAX, the maximum length of a single line
+	// modern systemd accepts in a unit file (1 MiB). Older systemd used
+	// LINE_MAX (2048).
+	LineMax = 1024 * 1024
 )
 
 var (
@@ -66,17 +59,6 @@ func (l *lexer) Lex() {
 	}()
 	next := l.LexNextSection
 	for next != nil {
-		if l.buf.Buffered() >= LineMax {
-			line, err := l.buf.Peek(LineMax)
-			if err != nil {
-				l.errchan <- err
-				return
-			}
-			if !bytes.ContainsAny(line, Newline) {
-				l.errchan <- ErrLineTooLong
-				return
-			}
-		}
 		var err error
 		next, err = next()
 		if err != nil {
@@ -84,7 +66,6 @@ func (l *lexer) Lex() {
 			return
 		}
 	}
-
 }
 
 func (l *lexer) LexNextSection() (lexStep, error) {
@@ -182,44 +163,48 @@ func (l *lexer) LexOptionNameFunc(section string) lexStep {
 		}
 
 		name := strings.TrimSpace(partial.String())
-		return l.LexOptionValueFunc(section, name, bytes.Buffer{}), nil
+		return l.LexOptionValueFunc(section, name), nil
 	}
 }
 
-func (l *lexer) LexOptionValueFunc(section, name string, partial bytes.Buffer) lexStep {
+func (l *lexer) LexOptionValueFunc(section, name string) lexStep {
 	return func() (lexStep, error) {
-		line, eof, err := l.toEOL()
-		if err != nil {
-			return nil, err
-		}
-
-		if len(bytes.TrimSpace(line)) > 0 {
-			partial.Write(line)
-
-			// a trailing backslash means the value continues on the next line;
-			// lack of continuation means this value has been exhausted
-			idx := bytes.LastIndex(line, []byte{'\\'})
-			if idx != -1 && idx == (len(line)-1) {
-				if !eof {
-					partial.WriteRune('\n')
-				}
-
-				return l.LexOptionValueFunc(section, name, partial), nil
+		var partial bytes.Buffer
+		for {
+			line, eof, err := l.toEOL()
+			if err != nil {
+				return nil, err
 			}
+
+			// comment lines inside a continuation are skipped entirely
+			if partial.Len() > 0 && len(line) > 0 && IsComment(rune(line[0])) {
+				if eof {
+					break
+				}
+				continue
+			}
+
+			if len(bytes.TrimSpace(line)) == 0 {
+				break
+			}
+
+			// a line ending in a backslash is concatenated with the next
+			// non-comment line and the backslash is replaced by a space,
+			// mirroring systemd.syntax(7)
+			if bytes.HasSuffix(line, []byte{'\\'}) && !eof {
+				partial.Write(line[:len(line)-1])
+				partial.WriteRune(' ')
+				continue
+			}
+
+			partial.Write(line)
+			break
 		}
 
-		val := partial.String()
-		if strings.HasSuffix(val, "\n") {
-			// A newline was added to the end, so the file didn't end with a backslash.
-			// => Keep the newline
-			val = strings.TrimSpace(val) + "\n"
-		} else {
-			val = strings.TrimSpace(val)
-		}
 		l.lexchan <- &lexData{
 			Type:    optionKind,
 			Section: nil,
-			Option:  &OptionValue{Option: name, Value: val},
+			Option:  &OptionValue{Option: name, Value: strings.TrimSpace(partial.String())},
 		}
 
 		return l.LexNextSectionOrOptionFunc(section), nil
@@ -254,6 +239,10 @@ func (l *lexer) toEOL() ([]byte, bool, error) {
 
 	line = bytes.TrimSuffix(line, []byte{'\n'})
 	line = bytes.TrimSuffix(line, []byte{'\r'})
+
+	if len(line) > LineMax {
+		return nil, false, ErrLineTooLong
+	}
 
 	return line, errors.Is(err, io.EOF), nil
 }

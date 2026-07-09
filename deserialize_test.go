@@ -2,6 +2,7 @@ package systemdconfig
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"reflect"
 	"strings"
@@ -88,6 +89,115 @@ func TestNewLexer(t *testing.T) {
 				t.Errorf("newLexer() got.buf = %v, want %v", buf.String(), tt.args.s)
 			}
 		})
+	}
+}
+
+func TestDeserialize(t *testing.T) {
+	tests := []struct {
+		name    string
+		in      string
+		want    *Unit
+		wantErr bool
+	}{
+		{
+			name: "Empty",
+			in:   "",
+			want: &Unit{},
+		},
+		{
+			name: "SimpleSection",
+			in:   "[Unit]\nDescription=Test\n",
+			want: &Unit{Sections: []*Section{
+				{Name: "Unit", Options: []*OptionValue{{Option: "Description", Value: "Test"}}},
+			}},
+		},
+		{
+			name: "MSDOSLineEndings",
+			in:   "[Unit]\r\nDescription=Test\r\n",
+			want: &Unit{Sections: []*Section{
+				{Name: "Unit", Options: []*OptionValue{{Option: "Description", Value: "Test"}}},
+			}},
+		},
+		{
+			name: "CommentsAndBlankLines",
+			in:   "# leading comment\n\n[Unit]\n; another comment\nDescription=Test\n",
+			want: &Unit{Sections: []*Section{
+				{Name: "Unit", Options: []*OptionValue{{Option: "Description", Value: "Test"}}},
+			}},
+		},
+		{
+			name: "DuplicateSections",
+			in:   "[Address]\nAddress=10.0.0.1/24\n\n[Address]\nAddress=10.0.0.2/24\n",
+			want: &Unit{Sections: []*Section{
+				{Name: "Address", Options: []*OptionValue{{Option: "Address", Value: "10.0.0.1/24"}}},
+				{Name: "Address", Options: []*OptionValue{{Option: "Address", Value: "10.0.0.2/24"}}},
+			}},
+		},
+		{
+			name: "OptionNameAndValueTrimmed",
+			in:   "[Unit]\nDescription = Test value \n",
+			want: &Unit{Sections: []*Section{
+				{Name: "Unit", Options: []*OptionValue{{Option: "Description", Value: "Test value"}}},
+			}},
+		},
+		{
+			name: "ContinuationJoinedWithSpace",
+			in:   "[Service]\nExecStart=/bin/foo \\\n--bar\n",
+			want: &Unit{Sections: []*Section{
+				{Name: "Service", Options: []*OptionValue{{Option: "ExecStart", Value: "/bin/foo  --bar"}}},
+			}},
+		},
+		{
+			name: "ContinuationSkipsCommentLines",
+			in:   "[Service]\nExecStart=/bin/foo \\\n# interleaved comment\n--bar\n",
+			want: &Unit{Sections: []*Section{
+				{Name: "Service", Options: []*OptionValue{{Option: "ExecStart", Value: "/bin/foo  --bar"}}},
+			}},
+		},
+		{
+			name: "TrailingBackslashAtEOFKeptLiterally",
+			in:   "[Service]\nExecStart=/bin/foo \\",
+			want: &Unit{Sections: []*Section{
+				{Name: "Service", Options: []*OptionValue{{Option: "ExecStart", Value: `/bin/foo \`}}},
+			}},
+		},
+		{
+			name:    "GarbageAfterSectionName",
+			in:      "[Unit] junk\nDescription=Test\n",
+			wantErr: true,
+		},
+		{
+			name:    "UnterminatedSectionName",
+			in:      "[Unit\nDescription=Test\n",
+			wantErr: true,
+		},
+		{
+			name:    "NewlineInOptionName",
+			in:      "[Unit]\nDesc\nription=Test\n",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Deserialize(strings.NewReader(tt.in))
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("Deserialize() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr {
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Deserialize() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDeserializeLineTooLong(t *testing.T) {
+	in := "[Unit]\nDescription=" + strings.Repeat("x", LineMax+1) + "\n"
+	_, err := Deserialize(strings.NewReader(in))
+	if !errors.Is(err, ErrLineTooLong) {
+		t.Errorf("Deserialize() error = %v, want ErrLineTooLong", err)
 	}
 }
 

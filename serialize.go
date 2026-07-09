@@ -14,11 +14,6 @@ func Serialize(unit *Unit) io.Reader {
 	}
 
 	for i, section := range unit.Sections {
-
-		if len(section.Options) == 0 {
-			continue
-		}
-
 		WriteSectionHeader(&buf, section)
 		for _, option := range section.Options {
 			WriteOptionValue(&buf, option)
