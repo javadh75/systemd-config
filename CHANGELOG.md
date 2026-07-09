@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- README: the intro now mentions drop-in merging, the behavior notes lead
+  with the `Unit.Value`/`Unit.Values` accessors, and the coverage minimum
+  is no longer hardcoded (it referred to 80% while the gate is 90% —
+  it now points at `COVERAGE_MIN` in the Makefile).
+
 ## v0.5.0 — 2026-07-09
 
 ### Added
