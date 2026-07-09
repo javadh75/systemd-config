@@ -2,8 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/javadh75/systemd-config.svg)](https://pkg.go.dev/github.com/javadh75/systemd-config)
 [![CI](https://github.com/javadh75/systemd-config/actions/workflows/ci.yml/badge.svg)](https://github.com/javadh75/systemd-config/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/javadh75/systemd-config/branch/master/graph/badge.svg?token=OJLajmXJv4)](https://codecov.io/gh/javadh75/systemd-config)
-[![Go Report Card](https://goreportcard.com/badge/github.com/javadh75/systemd-config)](https://goreportcard.com/report/github.com/javadh75/systemd-config)
+[![codecov](https://codecov.io/gh/javadh75/systemd-config/branch/master/graph/badge.svg)](https://codecov.io/gh/javadh75/systemd-config)
 
 A simple systemd config (de)serializer.
 
@@ -44,11 +43,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Look up a value (last assignment wins, like systemd).
-	if network := unit.SectionByName("Network"); network != nil {
-		if dns, ok := network.Value("DNS"); ok {
-			fmt.Println("DNS:", dns)
-		}
+	// Look up a value (last assignment wins, like systemd, even across
+	// duplicate sections).
+	if dns, ok := unit.Value("Network", "DNS"); ok {
+		fmt.Println("DNS:", dns)
 	}
 
 	// Duplicate sections are preserved and addressable.
@@ -80,6 +78,8 @@ func main() {
 - **Empty sections survive** a round trip (`[Install]` with no options stays).
 - **Line length** is capped at 1 MiB per line (systemd's `LONG_LINE_MAX`);
   longer lines yield `ErrLineTooLong`.
+- **Assignments before the first section header are rejected** with
+  `ErrAssignmentOutsideSection`, as in systemd.
 - **Canonical output**: serializing a parsed unit yields a fixpoint —
   parsing and serializing the output again reproduces it byte for byte
   (fuzz-tested).

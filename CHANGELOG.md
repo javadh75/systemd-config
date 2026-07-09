@@ -33,6 +33,9 @@
   (63.6µs → 29.3µs, 2000 → 1804 allocs/op on the parser benchmark).
 - `go.uber.org/goleak` (test-only dependency) now fails the suite if any
   test leaks a goroutine.
+- README: removed the Go Report Card badge (the service is retired) and
+  updated the usage example to `Unit.Value`. CI now authenticates codecov
+  uploads (`CODECOV_TOKEN`), unsticking the stale coverage badge.
 
 ## v0.3.0 — 2026-07-09
 
