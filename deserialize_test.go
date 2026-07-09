@@ -77,7 +77,7 @@ func TestNewLexer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _, _ := NewLexer(strings.NewReader(tt.args.s))
+			got, _, _ := newLexer(strings.NewReader(tt.args.s))
 			buf := new(strings.Builder)
 
 			_, err := io.Copy(buf, got.buf)
@@ -85,7 +85,7 @@ func TestNewLexer(t *testing.T) {
 				t.Errorf("Failed to read got.buf %v", got.buf)
 			}
 			if buf.String() != tt.args.s {
-				t.Errorf("NewLexer() got.buf = %v, want %v", buf.String(), tt.args.s)
+				t.Errorf("newLexer() got.buf = %v, want %v", buf.String(), tt.args.s)
 			}
 		})
 	}

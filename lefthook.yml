@@ -1,0 +1,24 @@
+# Local quality gate — fast checks before code leaves your machine.
+# The full suite (gosec, govulncheck, coverage gate) runs in CI.
+# Emergency bypass: git commit --no-verify  /  git push --no-verify
+
+pre-commit:
+  parallel: true
+  commands:
+    gofmt:
+      glob: "*.go"
+      run: |
+        unformatted=$(gofmt -l {staged_files})
+        [ -z "$unformatted" ] || { echo "gofmt needed:"; echo "$unformatted"; exit 1; }
+    gitleaks:
+      run: gitleaks git --staged --redact
+
+pre-push:
+  parallel: true
+  commands:
+    vet:
+      run: go vet ./...
+    lint:
+      run: golangci-lint run
+    test:
+      run: go test -race ./...

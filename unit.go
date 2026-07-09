@@ -10,14 +10,16 @@ func NewUnit() *Unit {
 	return &Unit{Sections: []*Section{}}
 }
 
+// Match reports whether u and other contain the same sections, regardless
+// of section order.
 func (u *Unit) Match(other *Unit) bool {
 	if len(u.Sections) != len(other.Sections) {
 		return false
 	}
 
-	otherSeen := InitialCompareSliceGenerator(len(other.Sections))
+	otherSeen := initialCompareSliceGenerator(len(other.Sections))
 
-	compareList := InitialCompareSliceGenerator(len(u.Sections))
+	compareList := initialCompareSliceGenerator(len(u.Sections))
 
 	for i, uElement := range u.Sections {
 		for j, otherElement := range other.Sections {
@@ -30,7 +32,7 @@ func (u *Unit) Match(other *Unit) bool {
 			}
 		}
 	}
-	if !AllAreTrue(otherSeen) || !AllAreTrue(compareList) {
+	if !allAreTrue(otherSeen) || !allAreTrue(compareList) {
 		return false
 	}
 	return true

@@ -2,7 +2,7 @@ package systemdconfig
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"reflect"
 	"testing"
 )
@@ -135,7 +135,7 @@ A=B
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			outReader := Serialize(tt.args.unit)
-			outBytes, err := ioutil.ReadAll(outReader)
+			outBytes, err := io.ReadAll(outReader)
 			if err != nil {
 				t.Errorf("case %s: encountered error while reading output: %v", tt.name, err)
 			}

@@ -11,7 +11,9 @@ func NewSection(name string) *Section {
 	return &Section{Name: name, Options: []*OptionValue{}}
 }
 
-func InitialCompareSliceGenerator(size int) []bool {
+// initialCompareSliceGenerator returns an all-false slice used to track
+// which elements have already been matched during comparison.
+func initialCompareSliceGenerator(size int) []bool {
 	ICS := make([]bool, size)
 	for index := range ICS {
 		ICS[index] = false
@@ -19,7 +21,8 @@ func InitialCompareSliceGenerator(size int) []bool {
 	return ICS
 }
 
-func AllAreTrue(b []bool) bool {
+// allAreTrue reports whether every element of b is true.
+func allAreTrue(b []bool) bool {
 	for _, element := range b {
 		if !element {
 			return false
@@ -28,6 +31,8 @@ func AllAreTrue(b []bool) bool {
 	return true
 }
 
+// Match reports whether s and other have the same name and the same
+// options, regardless of option order.
 func (s *Section) Match(other *Section) bool {
 	if s.Name != other.Name {
 		return false
@@ -36,9 +41,9 @@ func (s *Section) Match(other *Section) bool {
 		return false
 	}
 
-	otherSeen := InitialCompareSliceGenerator(len(other.Options))
+	otherSeen := initialCompareSliceGenerator(len(other.Options))
 
-	compareList := InitialCompareSliceGenerator(len(s.Options))
+	compareList := initialCompareSliceGenerator(len(s.Options))
 
 	for i, sElement := range s.Options {
 		for j, otherElement := range other.Options {
@@ -51,7 +56,7 @@ func (s *Section) Match(other *Section) bool {
 			}
 		}
 	}
-	if !AllAreTrue(otherSeen) || !AllAreTrue(compareList) {
+	if !allAreTrue(otherSeen) || !allAreTrue(compareList) {
 		return false
 	}
 	return true

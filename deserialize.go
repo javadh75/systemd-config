@@ -11,22 +11,22 @@ import (
 )
 
 const (
-	// SYSTEMD_LINE_MAX mimics the maximum line length that systemd can use.
+	// LineMax mimics the maximum line length that systemd can use.
 	// On typical systemd platforms (i.e. modern Linux), this will most
 	// commonly be 2048, so let's use that as a sanity check.
 	// Technically, we should probably pull this at runtime:
-	//    SYSTEMD_LINE_MAX = int(C.sysconf(C.__SC_LINE_MAX))
+	//    LineMax = int(C.sysconf(C.__SC_LINE_MAX))
 	// but this would introduce an (unfortunate) dependency on cgo
-	SYSTEMD_LINE_MAX = 2048
+	LineMax = 2048
 
-	// SYSTEMD_NEWLINE defines characters that systemd considers indicators
+	// Newline defines characters that systemd considers indicators
 	// for a newline.
-	SYSTEMD_NEWLINE = "\r\n"
+	Newline = "\r\n"
 )
 
 var (
 	// ErrLineTooLong gets returned when a line is too long for systemd to handle.
-	ErrLineTooLong = fmt.Errorf("line too long (max %d bytes)", SYSTEMD_LINE_MAX)
+	ErrLineTooLong = fmt.Errorf("line too long (max %d bytes)", LineMax)
 )
 
 type lexDataType int
@@ -50,8 +50,8 @@ type lexer struct {
 
 type lexStep func() (lexStep, error)
 
-// NewLexer returns a new systemd config lexer and needed data and error channel
-func NewLexer(f io.Reader) (*lexer, <-chan *lexData, <-chan error) {
+// newLexer returns a new systemd config lexer and needed data and error channel
+func newLexer(f io.Reader) (*lexer, <-chan *lexData, <-chan error) {
 	lexchan := make(chan *lexData)
 	errchan := make(chan error, 1)
 	buf := bufio.NewReader(f)
@@ -66,13 +66,13 @@ func (l *lexer) Lex() {
 	}()
 	next := l.LexNextSection
 	for next != nil {
-		if l.buf.Buffered() >= SYSTEMD_LINE_MAX {
-			line, err := l.buf.Peek(SYSTEMD_LINE_MAX)
+		if l.buf.Buffered() >= LineMax {
+			line, err := l.buf.Peek(LineMax)
 			if err != nil {
 				l.errchan <- err
 				return
 			}
-			if !bytes.ContainsAny(line, SYSTEMD_NEWLINE) {
+			if !bytes.ContainsAny(line, Newline) {
 				l.errchan <- ErrLineTooLong
 				return
 			}
@@ -90,7 +90,7 @@ func (l *lexer) Lex() {
 func (l *lexer) LexNextSection() (lexStep, error) {
 	r, _, err := l.buf.ReadRune()
 	if err != nil {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = nil
 		}
 		return nil, err
@@ -139,21 +139,24 @@ func (l *lexer) LexNextSectionOrOptionFunc(section string) lexStep {
 	return func() (lexStep, error) {
 		r, _, err := l.buf.ReadRune()
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				err = nil
 			}
 			return nil, err
 		}
 
-		if unicode.IsSpace(r) {
+		switch {
+		case unicode.IsSpace(r):
 			return l.LexNextSectionOrOptionFunc(section), nil
-		} else if r == '[' {
+		case r == '[':
 			return l.LexSectionName, nil
-		} else if IsComment(r) {
+		case IsComment(r):
 			return l.IgnoreLineFunc(l.LexNextSectionOrOptionFunc(section)), nil
 		}
 
-		l.buf.UnreadRune()
+		if err := l.buf.UnreadRune(); err != nil {
+			return nil, fmt.Errorf("unreading rune: %w", err)
+		}
 		return l.LexOptionNameFunc(section), nil
 	}
 }
@@ -164,7 +167,7 @@ func (l *lexer) LexOptionNameFunc(section string) lexStep {
 		for {
 			r, _, err := l.buf.ReadRune()
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("reading option name: %w", err)
 			}
 
 			if r == '\n' || r == '\r' {
@@ -185,29 +188,24 @@ func (l *lexer) LexOptionNameFunc(section string) lexStep {
 
 func (l *lexer) LexOptionValueFunc(section, name string, partial bytes.Buffer) lexStep {
 	return func() (lexStep, error) {
-		for {
-			line, eof, err := l.toEOL()
-			if err != nil {
-				return nil, err
-			}
+		line, eof, err := l.toEOL()
+		if err != nil {
+			return nil, err
+		}
 
-			if len(bytes.TrimSpace(line)) == 0 {
-				break
-			}
-
+		if len(bytes.TrimSpace(line)) > 0 {
 			partial.Write(line)
 
+			// a trailing backslash means the value continues on the next line;
 			// lack of continuation means this value has been exhausted
 			idx := bytes.LastIndex(line, []byte{'\\'})
-			if idx == -1 || idx != (len(line)-1) {
-				break
-			}
+			if idx != -1 && idx == (len(line)-1) {
+				if !eof {
+					partial.WriteRune('\n')
+				}
 
-			if !eof {
-				partial.WriteRune('\n')
+				return l.LexOptionValueFunc(section, name, partial), nil
 			}
-
-			return l.LexOptionValueFunc(section, name, partial), nil
 		}
 
 		val := partial.String()
@@ -250,23 +248,24 @@ func (l *lexer) IgnoreLineFunc(next lexStep) lexStep {
 func (l *lexer) toEOL() ([]byte, bool, error) {
 	line, err := l.buf.ReadBytes('\n')
 	// ignore EOF here since it's roughly equivalent to EOL
-	if err != nil && err != io.EOF {
-		return nil, false, err
+	if err != nil && !errors.Is(err, io.EOF) {
+		return nil, false, fmt.Errorf("reading line: %w", err)
 	}
 
 	line = bytes.TrimSuffix(line, []byte{'\n'})
 	line = bytes.TrimSuffix(line, []byte{'\r'})
 
-	return line, err == io.EOF, nil
+	return line, errors.Is(err, io.EOF), nil
 }
 
+// IsComment reports whether r marks the start of a comment line ('#' or ';').
 func IsComment(r rune) bool {
 	return r == '#' || r == ';'
 }
 
 // Deserialize deserialize given unparsed systemd config.
 func Deserialize(f io.Reader) (*Unit, error) {
-	lexer, lexchan, errchan := NewLexer(f)
+	lexer, lexchan, errchan := newLexer(f)
 
 	go lexer.Lex()
 

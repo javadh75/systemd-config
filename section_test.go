@@ -60,8 +60,8 @@ func TestInitialCompareSliceGenerator(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := InitialCompareSliceGenerator(tt.args.size); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("InitialCompareSliceGenerator() = %v, want %v", got, tt.want)
+			if got := initialCompareSliceGenerator(tt.args.size); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("initialCompareSliceGenerator() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -107,8 +107,8 @@ func TestAllAreTrue(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := AllAreTrue(tt.args.b); got != tt.want {
-				t.Errorf("AllAreTrue() = %v, want %v", got, tt.want)
+			if got := allAreTrue(tt.args.b); got != tt.want {
+				t.Errorf("allAreTrue() = %v, want %v", got, tt.want)
 			}
 		})
 	}
