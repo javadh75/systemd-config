@@ -18,6 +18,12 @@
   `fmt.Stringer`.
 - Testable examples (`ExampleDeserialize`, `ExampleUnit_Value`,
   `ExampleUnit_WriteTo`) rendered on pkg.go.dev.
+- Real-world fixtures under `testdata/` (services, sockets, netdev,
+  network, mount, timer, daemon configs, drop-ins, CRLF) with golden
+  round-trips and expected-value tests.
+- Fuzzing in CI: a 15-second smoke run on every push/PR and a nightly
+  10-minute run; the fuzzer is now also seeded with every testdata
+  fixture.
 
 ### Changed
 

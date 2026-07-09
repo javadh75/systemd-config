@@ -2,6 +2,8 @@ package systemdconfig
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -25,6 +27,19 @@ func FuzzDeserialize(f *testing.F) {
 	}
 	for _, s := range seeds {
 		f.Add([]byte(s))
+	}
+
+	// every real-world fixture (and its golden form) is a seed too
+	fixtures, err := filepath.Glob(filepath.Join("testdata", "*"))
+	if err != nil {
+		f.Fatal(err)
+	}
+	for _, path := range fixtures {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue // testdata/fuzz is a directory
+		}
+		f.Add(data)
 	}
 
 	f.Fuzz(func(t *testing.T, data []byte) {
