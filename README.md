@@ -4,7 +4,9 @@
 [![CI](https://github.com/javadh75/systemd-config/actions/workflows/ci.yml/badge.svg)](https://github.com/javadh75/systemd-config/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/javadh75/systemd-config/branch/master/graph/badge.svg)](https://codecov.io/gh/javadh75/systemd-config)
 
-A simple systemd config (de)serializer.
+A simple systemd config (de)serializer. It parses and writes unit/config
+files, and can compute the effective configuration of a unit combined
+with its drop-ins (see [Drop-ins](#drop-ins)).
 
 This project is highly inspired by
 [go-systemd/unit](https://github.com/coreos/go-systemd/tree/main/unit). The
@@ -82,9 +84,10 @@ cmd, _ := effective.Value("Service", "ExecStart")
 
 ## Behavior notes
 
-- **Duplicate sections and options** are preserved in order. `Section.Value`
-  follows systemd's last-assignment-wins rule; `Section.Values` returns every
-  occurrence.
+- **Duplicate sections and options** are preserved in order. `Unit.Value`
+  follows systemd's last-assignment-wins rule across duplicate sections;
+  `Unit.Values` returns every occurrence. `Section.Value`/`Section.Values`
+  do the same within a single section.
 - **Comments and blank lines are not preserved**: deserializing discards
   them, so a deserialize/serialize round trip produces a normalized file.
 - **Continuation lines** follow systemd.syntax(7): a line ending in `\` is
@@ -104,7 +107,7 @@ cmd, _ := effective.Value("Service", "ExecStart")
 
 ```sh
 make check     # full quality gate: tidy, fmt, vet, lint, security, tests
-make coverage  # coverage report, fails below 80%
+make coverage  # coverage report, fails below COVERAGE_MIN (see Makefile)
 make hooks     # install pre-commit/pre-push git hooks (lefthook)
 make fuzz      # short fuzz run of the deserializer
 ```
