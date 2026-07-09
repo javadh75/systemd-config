@@ -13,6 +13,9 @@ func unitOf(sections ...*Section) *Unit {
 }
 
 func sectionOf(name string, options ...*OptionValue) *Section {
+	if options == nil {
+		options = []*OptionValue{}
+	}
 	return &Section{Name: name, Options: options}
 }
 

@@ -64,6 +64,22 @@ func main() {
 }
 ```
 
+## Drop-ins
+
+`Merge` computes the effective configuration of a unit combined with its
+drop-ins (`systemctl cat` semantics): drop-ins apply in order as if
+appended, and an empty assignment (`ExecStart=`) resets every earlier
+occurrence of that option, as described in systemd.unit(5). Duplicate
+sections are never collapsed.
+
+```go
+base, _ := systemdconfig.Deserialize(baseFile)     // nginx.service
+override, _ := systemdconfig.Deserialize(dropFile) // nginx.service.d/override.conf
+
+effective := systemdconfig.Merge(base, override)
+cmd, _ := effective.Value("Service", "ExecStart")
+```
+
 ## Behavior notes
 
 - **Duplicate sections and options** are preserved in order. `Section.Value`

@@ -51,6 +51,19 @@ func (u *Unit) Value(section, option string) (string, bool) {
 	return "", false
 }
 
+// Values returns the values of every occurrence of the named option
+// across all sections with the given name, in order of appearance. It
+// returns nil when there is no occurrence.
+func (u *Unit) Values(section, option string) []string {
+	var values []string
+	for _, s := range u.Sections {
+		if s.Name == section {
+			values = append(values, s.Values(option)...)
+		}
+	}
+	return values
+}
+
 // String returns the canonical serialized form of the unit,
 // implementing fmt.Stringer.
 func (u *Unit) String() string {

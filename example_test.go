@@ -59,6 +59,34 @@ ExecStart=/usr/sbin/nginx
 	// Output: /usr/sbin/nginx true
 }
 
+func ExampleMerge() {
+	base, err := systemdconfig.Deserialize(strings.NewReader(`[Service]
+ExecStart=/usr/sbin/nginx
+Restart=always
+`))
+	if err != nil {
+		log.Fatal(err)
+	}
+	// /etc/systemd/system/nginx.service.d/override.conf
+	dropin, err := systemdconfig.Deserialize(strings.NewReader(`[Service]
+ExecStart=
+ExecStart=/usr/sbin/nginx -c /etc/nginx/custom.conf
+`))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	effective := systemdconfig.Merge(base, dropin)
+
+	// The empty assignment reset the base ExecStart; only the
+	// drop-in's value remains. Untouched options survive.
+	fmt.Println(effective.Values("Service", "ExecStart"))
+	fmt.Println(effective.Values("Service", "Restart"))
+	// Output:
+	// [/usr/sbin/nginx -c /etc/nginx/custom.conf]
+	// [always]
+}
+
 func ExampleUnit_WriteTo() {
 	unit := systemdconfig.NewUnit()
 	unit.AddSection("Match").AddOption("Name", "eth0")

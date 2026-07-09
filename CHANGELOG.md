@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `Merge(base, dropins...)` — computes the effective configuration of a
+  unit combined with its drop-ins per systemd.unit(5): drop-ins apply in
+  order as if appended, and an empty assignment resets every earlier
+  occurrence of that option across same-named sections. Duplicate
+  sections are never collapsed, and inputs are not modified.
+- `Unit.Values(section, option)` — every occurrence of an option across
+  all same-named sections, in order of appearance.
+
 ## v0.4.0 — 2026-07-09
 
 ### Breaking changes
