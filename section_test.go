@@ -34,86 +34,6 @@ func TestNewSection(t *testing.T) {
 	}
 }
 
-func TestInitialCompareSliceGenerator(t *testing.T) {
-	type args struct {
-		size int
-	}
-	tests := []struct {
-		name string
-		args args
-		want []bool
-	}{
-		{
-			name: "Empty",
-			args: args{
-				size: 0,
-			},
-			want: []bool{},
-		},
-		{
-			name: "Simple",
-			args: args{
-				size: 3,
-			},
-			want: []bool{false, false, false},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := initialCompareSliceGenerator(tt.args.size); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("initialCompareSliceGenerator() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestAllAreTrue(t *testing.T) {
-	type args struct {
-		b []bool
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "Empty",
-			args: args{
-				b: []bool{},
-			},
-			want: true,
-		},
-		{
-			name: "AllTrue",
-			args: args{
-				b: []bool{true, true, true},
-			},
-			want: true,
-		},
-		{
-			name: "AllFalse",
-			args: args{
-				b: []bool{false, false, false},
-			},
-			want: false,
-		},
-		{
-			name: "OneFalse",
-			args: args{
-				b: []bool{false, true, true},
-			},
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := allAreTrue(tt.args.b); got != tt.want {
-				t.Errorf("allAreTrue() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestSection_Match(t *testing.T) {
 	type fields struct {
 		Name    string
@@ -270,6 +190,38 @@ func TestSection_Match(t *testing.T) {
 					Options: []*OptionValue{
 						{
 							Option: "D",
+							Value:  "C",
+						},
+						{
+							Option: "B",
+							Value:  "C",
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "DuplicateOptionsEqual",
+			fields: fields{
+				Name: "A",
+				Options: []*OptionValue{
+					{
+						Option: "B",
+						Value:  "C",
+					},
+					{
+						Option: "B",
+						Value:  "C",
+					},
+				},
+			},
+			args: args{
+				other: &Section{
+					Name: "A",
+					Options: []*OptionValue{
+						{
+							Option: "B",
 							Value:  "C",
 						},
 						{

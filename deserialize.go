@@ -263,7 +263,7 @@ func IsComment(r rune) bool {
 	return r == '#' || r == ';'
 }
 
-// Deserialize deserialize given unparsed systemd config.
+// Deserialize parses the given systemd config into a Unit.
 func Deserialize(f io.Reader) (*Unit, error) {
 	lexer, lexchan, errchan := newLexer(f)
 
@@ -276,7 +276,7 @@ func Deserialize(f io.Reader) (*Unit, error) {
 		case optionKind:
 			if ld.Option != nil {
 				if len(unit.Sections) == 0 {
-					return nil, fmt.Errorf("Unit file misparse: option before section")
+					return nil, errors.New("unit file misparse: option before section")
 				}
 
 				s := len(unit.Sections) - 1

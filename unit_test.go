@@ -215,6 +215,36 @@ func TestUnit_Match(t *testing.T) {
 			want: true,
 		},
 		{
+			name: "EqualDuplicateSections",
+			fields: fields{
+				Sections: []*Section{
+					{
+						Name:    "A",
+						Options: []*OptionValue{},
+					},
+					{
+						Name:    "A",
+						Options: []*OptionValue{},
+					},
+				},
+			},
+			args: args{
+				other: &Unit{
+					Sections: []*Section{
+						{
+							Name:    "A",
+							Options: []*OptionValue{},
+						},
+						{
+							Name:    "A",
+							Options: []*OptionValue{},
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
 			name: "UnequalMultipleDuplicateSections",
 			fields: fields{
 				Sections: []*Section{

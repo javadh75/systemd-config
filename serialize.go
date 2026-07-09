@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// Serialize serialize the given systemd config unit file.
+// Serialize serializes the given systemd config unit file.
 func Serialize(unit *Unit) io.Reader {
 	var buf bytes.Buffer
 
@@ -44,7 +44,7 @@ func WriteSectionHeader(buf *bytes.Buffer, section *Section) {
 	WriteNewLine(buf)
 }
 
-// WriteOptionValue writes a option and value to given buffer.
+// WriteOptionValue writes an option and value to given buffer.
 func WriteOptionValue(buf *bytes.Buffer, option *OptionValue) {
 	buf.WriteString(option.Option)
 	buf.WriteRune('=')
