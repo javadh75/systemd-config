@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestNewUnitOption(t *testing.T) {
+func TestNewOptionValue(t *testing.T) {
 	type args struct {
 		option string
 		value  string
@@ -38,8 +38,8 @@ func TestNewUnitOption(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewUnitOption(tt.args.option, tt.args.value); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewUnitOption() = %v, want %v", got, tt.want)
+			if got := NewOptionValue(tt.args.option, tt.args.value); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewOptionValue() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -8,8 +8,8 @@ type OptionValue struct {
 	Value  string
 }
 
-// NewUnitOption returns a new OptionValue with pre-set option and value.
-func NewUnitOption(option, value string) *OptionValue {
+// NewOptionValue returns a new OptionValue with pre-set option and value.
+func NewOptionValue(option, value string) *OptionValue {
 	return &OptionValue{Option: option, Value: value}
 }
 
