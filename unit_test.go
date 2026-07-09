@@ -48,6 +48,55 @@ func TestUnit_SectionLookupAndAdd(t *testing.T) {
 	}
 }
 
+func TestUnit_Value(t *testing.T) {
+	unit := unitOf(
+		sectionOf("Network",
+			optionOf("DHCP", "no"),
+			optionOf("DNS", "192.168.0.1"),
+		),
+		sectionOf("Address",
+			optionOf("Address", "10.0.0.1/24"),
+		),
+		sectionOf("Network",
+			optionOf("DNS", "1.1.1.1"),
+		),
+	)
+
+	tests := []struct {
+		name    string
+		section string
+		option  string
+		want    string
+		wantOK  bool
+	}{
+		{"LastDuplicateSectionWins", "Network", "DNS", "1.1.1.1", true},
+		{"FallsBackToEarlierDuplicate", "Network", "DHCP", "no", true},
+		{"SingleSection", "Address", "Address", "10.0.0.1/24", true},
+		{"MissingOption", "Network", "Gateway", "", false},
+		{"MissingSection", "Route", "Gateway", "", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := unit.Value(tt.section, tt.option)
+			if got != tt.want || ok != tt.wantOK {
+				t.Errorf("Unit.Value(%q, %q) = %q, %v, want %q, %v",
+					tt.section, tt.option, got, ok, tt.want, tt.wantOK)
+			}
+		})
+	}
+}
+
+func TestUnit_String(t *testing.T) {
+	unit := unitOf(
+		sectionOf("Unit", optionOf("Description", "Test")),
+		sectionOf("Install", optionOf("WantedBy", "multi-user.target")),
+	)
+	want := "[Unit]\nDescription=Test\n\n[Install]\nWantedBy=multi-user.target\n"
+	if got := unit.String(); got != want {
+		t.Errorf("Unit.String() = %q, want %q", got, want)
+	}
+}
+
 func TestUnit_Match(t *testing.T) {
 	type fields struct {
 		Sections []*Section

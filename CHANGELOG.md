@@ -9,6 +9,16 @@
   `ErrAssignmentOutsideSection`, matching systemd. Previously such text
   was silently discarded.
 
+### Added
+
+- `Unit.Value(section, option)` — one-call lookup that treats duplicate
+  sections as one merged section with last-assignment-wins semantics,
+  as systemd does.
+- `Unit.String()` — the canonical serialized form, implementing
+  `fmt.Stringer`.
+- Testable examples (`ExampleDeserialize`, `ExampleUnit_Value`,
+  `ExampleUnit_WriteTo`) rendered on pkg.go.dev.
+
 ### Changed
 
 - The lexer is synchronous: the goroutine/channel pipeline inherited from

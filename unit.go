@@ -1,5 +1,7 @@
 package systemdconfig
 
+import "bytes"
+
 // Unit represents a systemd config unit file.
 type Unit struct {
 	Sections []*Section
@@ -31,6 +33,30 @@ func (u *Unit) SectionByName(name string) *Section {
 		}
 	}
 	return nil
+}
+
+// Value returns the value of the named option in the named section and
+// whether the option is present at all. It follows systemd's semantics
+// for duplicates: sections with the same name behave as one merged
+// section and the last assignment wins.
+func (u *Unit) Value(section, option string) (string, bool) {
+	for i := len(u.Sections) - 1; i >= 0; i-- {
+		if u.Sections[i].Name != section {
+			continue
+		}
+		if v, ok := u.Sections[i].Value(option); ok {
+			return v, true
+		}
+	}
+	return "", false
+}
+
+// String returns the canonical serialized form of the unit,
+// implementing fmt.Stringer.
+func (u *Unit) String() string {
+	var buf bytes.Buffer
+	_, _ = u.WriteTo(&buf)
+	return buf.String()
 }
 
 // AddSection appends a new empty section with the given name and returns it.
