@@ -78,7 +78,7 @@ func TestNewLexer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _, _ := newLexer(strings.NewReader(tt.args.s))
+			got := newLexer(strings.NewReader(tt.args.s))
 			buf := new(strings.Builder)
 
 			_, err := io.Copy(buf, got.buf)
@@ -162,6 +162,11 @@ func TestDeserialize(t *testing.T) {
 			}},
 		},
 		{
+			name:    "AssignmentBeforeFirstSection",
+			in:      "Option=before section\n[Unit]\nA=B\n",
+			wantErr: true,
+		},
+		{
 			name:    "GarbageAfterSectionName",
 			in:      "[Unit] junk\nDescription=Test\n",
 			wantErr: true,
@@ -190,6 +195,13 @@ func TestDeserialize(t *testing.T) {
 				t.Errorf("Deserialize() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestDeserializeAssignmentOutsideSection(t *testing.T) {
+	_, err := Deserialize(strings.NewReader("Option=value\n"))
+	if !errors.Is(err, ErrAssignmentOutsideSection) {
+		t.Errorf("Deserialize() error = %v, want ErrAssignmentOutsideSection", err)
 	}
 }
 
@@ -253,9 +265,7 @@ func Test_lexer_toEOL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &lexer{
-				buf:     bufio.NewReader(strings.NewReader(tt.fields.s)),
-				lexchan: make(chan *lexData),
-				errchan: make(chan error, 1),
+				buf: bufio.NewReader(strings.NewReader(tt.fields.s)),
 			}
 			got, got1, err := l.toEOL()
 			if (err != nil) != tt.wantErr {

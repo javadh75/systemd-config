@@ -20,52 +20,36 @@ const (
 var (
 	// ErrLineTooLong gets returned when a line is too long for systemd to handle.
 	ErrLineTooLong = fmt.Errorf("line too long (max %d bytes)", LineMax)
+
+	// ErrAssignmentOutsideSection gets returned when an assignment (or any
+	// other non-comment text) appears before the first section header.
+	// systemd rejects such lines too.
+	ErrAssignmentOutsideSection = errors.New("assignment outside of section")
 )
-
-type lexDataType int
-
-const (
-	sectionKind lexDataType = iota
-	optionKind
-)
-
-type lexData struct {
-	Type    lexDataType
-	Option  *OptionValue
-	Section *Section
-}
 
 type lexer struct {
-	buf     *bufio.Reader
-	lexchan chan *lexData
-	errchan chan error
+	buf  *bufio.Reader
+	unit *Unit
 }
 
 type lexStep func() (lexStep, error)
 
-// newLexer returns a new systemd config lexer and needed data and error channel
-func newLexer(f io.Reader) (*lexer, <-chan *lexData, <-chan error) {
-	lexchan := make(chan *lexData)
-	errchan := make(chan error, 1)
-	buf := bufio.NewReader(f)
-
-	return &lexer{buf: buf, lexchan: lexchan, errchan: errchan}, lexchan, errchan
+// newLexer returns a lexer that parses f into a fresh unit.
+func newLexer(f io.Reader) *lexer {
+	return &lexer{buf: bufio.NewReader(f), unit: &Unit{}}
 }
 
-func (l *lexer) Lex() {
-	defer func() {
-		close(l.lexchan)
-		close(l.errchan)
-	}()
+// lex drives the state machine until the input is exhausted or a step fails.
+func (l *lexer) lex() error {
 	next := l.LexNextSection
 	for next != nil {
 		var err error
 		next, err = next()
 		if err != nil {
-			l.errchan <- err
-			return
+			return err
 		}
 	}
+	return nil
 }
 
 func (l *lexer) LexNextSection() (lexStep, error) {
@@ -77,12 +61,15 @@ func (l *lexer) LexNextSection() (lexStep, error) {
 		return nil, err
 	}
 
-	if r == '[' {
+	switch {
+	case unicode.IsSpace(r):
+		return l.LexNextSection, nil
+	case r == '[':
 		return l.LexSectionName, nil
-	} else if IsComment(r) {
+	case IsComment(r):
 		return l.IgnoreLineFunc(l.LexNextSection), nil
 	}
-	return l.LexNextSection, nil
+	return nil, ErrAssignmentOutsideSection
 }
 
 func (l *lexer) LexSectionName() (lexStep, error) {
@@ -94,7 +81,7 @@ func (l *lexer) LexSectionName() (lexStep, error) {
 	return l.LexSectionSuffixFunc(string(sec[:len(sec)-1])), nil
 }
 
-func (l *lexer) LexSectionSuffixFunc(section string) lexStep {
+func (l *lexer) LexSectionSuffixFunc(name string) lexStep {
 	return func() (lexStep, error) {
 		garbage, _, err := l.toEOL()
 		if err != nil {
@@ -103,20 +90,17 @@ func (l *lexer) LexSectionSuffixFunc(section string) lexStep {
 
 		garbage = bytes.TrimSpace(garbage)
 		if len(garbage) > 0 {
-			return nil, fmt.Errorf("found garbage after section name %s: %q", section, garbage)
+			return nil, fmt.Errorf("found garbage after section name %s: %q", name, garbage)
 		}
 
-		l.lexchan <- &lexData{
-			Type:    sectionKind,
-			Section: &Section{Name: section, Options: []*OptionValue{}},
-			Option:  nil,
-		}
+		section := &Section{Name: name, Options: []*OptionValue{}}
+		l.unit.Sections = append(l.unit.Sections, section)
 
 		return l.LexNextSectionOrOptionFunc(section), nil
 	}
 }
 
-func (l *lexer) LexNextSectionOrOptionFunc(section string) lexStep {
+func (l *lexer) LexNextSectionOrOptionFunc(section *Section) lexStep {
 	return func() (lexStep, error) {
 		r, _, err := l.buf.ReadRune()
 		if err != nil {
@@ -142,7 +126,7 @@ func (l *lexer) LexNextSectionOrOptionFunc(section string) lexStep {
 	}
 }
 
-func (l *lexer) LexOptionNameFunc(section string) lexStep {
+func (l *lexer) LexOptionNameFunc(section *Section) lexStep {
 	return func() (lexStep, error) {
 		var partial bytes.Buffer
 		for {
@@ -167,7 +151,7 @@ func (l *lexer) LexOptionNameFunc(section string) lexStep {
 	}
 }
 
-func (l *lexer) LexOptionValueFunc(section, name string) lexStep {
+func (l *lexer) LexOptionValueFunc(section *Section, name string) lexStep {
 	return func() (lexStep, error) {
 		var partial bytes.Buffer
 		for {
@@ -213,11 +197,7 @@ func (l *lexer) LexOptionValueFunc(section, name string) lexStep {
 			val = strings.TrimSpace(val[:len(val)-1])
 		}
 
-		l.lexchan <- &lexData{
-			Type:    optionKind,
-			Section: nil,
-			Option:  &OptionValue{Option: name, Value: val},
-		}
+		section.Options = append(section.Options, &OptionValue{Option: name, Value: val})
 
 		return l.LexNextSectionOrOptionFunc(section), nil
 	}
@@ -264,33 +244,12 @@ func IsComment(r rune) bool {
 	return r == '#' || r == ';'
 }
 
-// Deserialize parses the given systemd config into a Unit.
+// Deserialize parses the given systemd config into a Unit. On error it
+// returns the sections parsed so far alongside the error.
 func Deserialize(f io.Reader) (*Unit, error) {
-	lexer, lexchan, errchan := newLexer(f)
-
-	go lexer.Lex()
-
-	unit := Unit{}
-
-	for ld := range lexchan {
-		switch ld.Type {
-		case optionKind:
-			if ld.Option != nil {
-				if len(unit.Sections) == 0 {
-					return nil, errors.New("unit file misparse: option before section")
-				}
-
-				s := len(unit.Sections) - 1
-				unit.Sections[s].Options = append(unit.Sections[s].Options, ld.Option)
-			}
-		case sectionKind:
-			if ld.Section != nil {
-				unit.Sections = append(unit.Sections, ld.Section)
-			}
-		}
+	l := newLexer(f)
+	if err := l.lex(); err != nil {
+		return l.unit, err
 	}
-
-	err := <-errchan
-
-	return &unit, err
+	return l.unit, nil
 }

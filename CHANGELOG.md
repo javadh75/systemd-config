@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Breaking changes
+
+- `Deserialize` now rejects assignments (or any non-comment text) that
+  appear before the first section header with
+  `ErrAssignmentOutsideSection`, matching systemd. Previously such text
+  was silently discarded.
+
+### Changed
+
+- The lexer is synchronous: the goroutine/channel pipeline inherited from
+  go-systemd/unit is gone. This removes a latent goroutine leak on
+  early-error returns and makes `Deserialize` ~2.2x faster
+  (63.6µs → 29.3µs, 2000 → 1804 allocs/op on the parser benchmark).
+- `go.uber.org/goleak` (test-only dependency) now fails the suite if any
+  test leaks a goroutine.
+
 ## v0.3.0 — 2026-07-09
 
 ### Breaking changes
