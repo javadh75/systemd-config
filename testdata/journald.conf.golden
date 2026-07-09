@@ -1,0 +1,7 @@
+[Journal]
+Storage=persistent
+Compress=yes
+SystemMaxUse=500M
+SystemKeepFree=1G
+MaxRetentionSec=1month
+ForwardToSyslog=no

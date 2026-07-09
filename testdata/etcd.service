@@ -1,0 +1,20 @@
+[Unit]
+Description=etcd key-value store
+Documentation=https://github.com/etcd-io/etcd
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=etcd
+ExecStart=/usr/local/bin/etcd\
+--name=infra0\
+# TLS material lives on the encrypted volume
+--cert-file=/etc/ssl/certs/etcd.pem\
+--key-file=/etc/ssl/private/etcd-key.pem\
+--initial-advertise-peer-urls=https://10.0.1.10:2380
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

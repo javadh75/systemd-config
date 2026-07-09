@@ -1,0 +1,10 @@
+[Resolve]
+DNS=9.9.9.9#dns.quad9.net 2620:fe::fe#dns.quad9.net
+FallbackDNS=1.1.1.1 8.8.8.8 2001:4860:4860::8888
+Domains=~.
+DNSSEC=allow-downgrade
+DNSOverTLS=opportunistic
+MulticastDNS=no
+LLMNR=no
+Cache=yes
+DNSStubListener=yes

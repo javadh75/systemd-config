@@ -1,0 +1,19 @@
+[NetDev]
+Name=wg0
+Kind=wireguard
+Description=WireGuard VPN tunnel
+
+[WireGuard]
+ListenPort=51820
+PrivateKeyFile=/etc/systemd/network/wg0.key
+
+[WireGuardPeer]
+PublicKey=xTIBA5rboUvnH4htodjb6e697QjLERt1NAB4mZqp8Dg=
+AllowedIPs=10.192.122.3/32, 10.192.124.0/24
+Endpoint=vpn1.example.com:51820
+PersistentKeepalive=25
+
+[WireGuardPeer]
+PublicKey=TrMvSoP4jYQlY6RIzBgbssQqY3vxI2Pi+y71lOWWXX0=
+AllowedIPs=10.192.122.4/32
+Endpoint=[2607:5300:60:6b0::c05f:543]:2468

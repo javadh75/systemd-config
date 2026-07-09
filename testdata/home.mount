@@ -1,0 +1,12 @@
+[Unit]
+Description=Home Directory
+Before=local-fs.target
+
+[Mount]
+What=/dev/disk/by-uuid/f5872a89-8a9c-4e42-a17e-6cb92b7e72a4
+Where=/home
+Type=ext4
+Options=defaults,noatime
+
+[Install]
+WantedBy=local-fs.target

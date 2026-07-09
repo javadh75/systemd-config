@@ -1,0 +1,5 @@
+[Service]
+ExecStart=
+ExecStart=/usr/sbin/nginx -c /etc/nginx/custom.conf -g 'daemon on; master_process on;'
+LimitNOFILE=65536
+Nice=-5

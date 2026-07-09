@@ -1,0 +1,12 @@
+# exported from a Windows configuration tool
+[Unit]
+Description=Telemetry agent
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/agent/bin/agent --config /etc/agent.yaml
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

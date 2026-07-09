@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily backup of /srv
+Requires=backup.service
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+RandomizedDelaySec=30min
+Persistent=true
+AccuracySec=1h
+
+[Install]
+WantedBy=timers.target

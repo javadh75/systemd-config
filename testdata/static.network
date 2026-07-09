@@ -1,0 +1,26 @@
+# statically configured wired uplink, see systemd.network(5)
+[Match]
+Name=enp2s0
+
+[Network]
+DHCP=no
+DNS=192.168.0.1
+DNS=2001:4860:4860::8888
+Domains=example.com
+
+[Address]
+Address=192.168.0.15/24
+Broadcast=192.168.0.255
+Label=uplink
+
+[Address]
+Address=2001:db8:dead:beef::5/64
+
+[Route]
+Gateway=192.168.0.1
+Metric=100
+
+[Route]
+Destination=10.0.0.0/8
+Gateway=192.168.0.254
+GatewayOnLink=yes
