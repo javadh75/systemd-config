@@ -90,9 +90,19 @@ test that fails before the fix and passes after.
   `go test -race -covermode=atomic -coverprofile=coverage.out ./...`.
 - Human-readable views: `go tool cover -func=coverage.out` (per-func summary) and
   `go tool cover -html=coverage.out -o coverage.html` (annotated source).
-- CI uploads the profile (codecov is already wired up) and **fails below the 80%
-  line-coverage minimum** (enforced by `make coverage` via `COVERAGE_MIN`;
-  ratchet upward over time). Never let coverage silently drop.
+- CI uploads the profile (codecov is already wired up) and **fails below the
+  line-coverage minimum in the Makefile** (enforced by `make coverage` via
+  `COVERAGE_MIN`, currently 90%; ratchet upward over time). Never let coverage
+  silently drop.
+
+## Releases
+
+- Tagging a release means: rename the CHANGELOG `Unreleased` section to the
+  version + date, commit, tag `vX.Y.Z`, push the tag, then `gh release create`
+  with the changelog section as notes.
+- `SECURITY.md` is deliberately version-agnostic ("latest release only") —
+  never write concrete version numbers into it; there is nothing to update
+  there when releasing.
 
 ## License
 

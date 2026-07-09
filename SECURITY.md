@@ -8,8 +8,8 @@ input (fuzzed continuously in CI).
 
 | Version | Supported |
 | ------- | --------- |
-| latest (v0.4.x) | ✅ |
-| older | ❌ |
+| latest release | ✅ |
+| anything older | ❌ |
 
 ## Reporting a vulnerability
 
